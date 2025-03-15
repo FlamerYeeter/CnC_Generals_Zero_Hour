@@ -83,6 +83,8 @@ public:
 	BlastInfo m_blastInfo[ MAX_NEUTRON_BLASTS ];		///< blast information
 	Real m_scorchSize;															///< size of scorch mark
 	const FXList *m_fxList;													///< the actual fx list that creates all the visuals.
+	DamageType			m_damageType;
+	DeathType				m_deathType;
 
 };
 

@@ -270,9 +270,9 @@ void TransportContain::letRidersUpgradeWeaponSet( void )
   }
 
   if ( anyRiderHasViableWeapon )
-  	self->setWeaponSetFlag( WEAPONSET_PLAYER_UPGRADE );
+  	self->setWeaponSetFlag( WEAPONSET_ARMED_RIDERS );
   else
-  	self->clearWeaponSetFlag( WEAPONSET_PLAYER_UPGRADE );
+  	self->clearWeaponSetFlag( WEAPONSET_ARMED_RIDERS );
 
 }
 

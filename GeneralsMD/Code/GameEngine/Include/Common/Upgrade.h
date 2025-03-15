@@ -53,8 +53,8 @@ enum UpgradeStatusType
 	UPGRADE_STATUS_COMPLETE
 };
 
-//The maximum number of upgrades. 
-#define UPGRADE_MAX_COUNT 128
+//The maximum number of upgrades.  21 fucking years later... it's now 256 (for mathematical reasons?)
+#define UPGRADE_MAX_COUNT 256
 
 typedef BitFlags<UPGRADE_MAX_COUNT>	UpgradeMaskType;
 

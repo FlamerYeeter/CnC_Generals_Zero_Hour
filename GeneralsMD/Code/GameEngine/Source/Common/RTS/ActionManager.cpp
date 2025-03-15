@@ -1548,6 +1548,7 @@ Bool ActionManager::canDoSpecialPowerAtLocation( const Object *obj, const Coord3
 			case SPECIAL_RADAR_VAN_SCAN:
 			case SPECIAL_SPY_DRONE:
 			case SPECIAL_HELIX_NAPALM_BOMB:
+			case SPECIAL_DEFECTOR_IMPROVED:
 
         //These specials can be used anywhere!
         return isPointOnMap( loc );
@@ -1564,6 +1565,7 @@ Bool ActionManager::canDoSpecialPowerAtLocation( const Object *obj, const Coord3
 			case SPECIAL_BLACKLOTUS_CAPTURE_BUILDING:
 			case SPECIAL_BLACKLOTUS_DISABLE_VEHICLE_HACK:
 			case SPECIAL_BLACKLOTUS_STEAL_CASH_HACK:
+			case SPECIAL_MINDCONTROL_STEAL:
 			case SPECIAL_INFANTRY_CAPTURE_BUILDING:
 			case SPECIAL_DETONATE_DIRTY_NUKE:
 			case SPECIAL_DISGUISE_AS_VEHICLE:
@@ -1654,8 +1656,8 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 				//Can only disable buildings... 
 				if( target->isKindOf( KINDOF_STRUCTURE ) && r == ENEMIES )
 				{
-					//Make sure the building is considered hackable (temp: using capturable)
-					if( !target->isKindOf( KINDOF_CAPTURABLE ) || target->isKindOf( KINDOF_REBUILD_HOLE ) )
+					//Make sure the building is considered hackable (temp: removed the NOT capturable, allowing you to disable defenses)
+					if( target->isKindOf( KINDOF_REBUILD_HOLE ) )
 					{
 						return FALSE;
 					}
@@ -1672,6 +1674,9 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 				
 			case SPECIAL_BLACKLOTUS_STEAL_CASH_HACK:
 				return canStealCashViaHacking( obj, target, commandSource );
+				
+			case SPECIAL_MINDCONTROL_STEAL:
+				return canCaptureUnits( obj, target, commandSource );
 
 			case SPECIAL_CASH_HACK:
 				//Can only disable enemy supply centers. 
@@ -1781,6 +1786,24 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 			case SPECIAL_CHANGE_BATTLE_PLANS:
 			case SPECIAL_CLEANUP_AREA:
 			case SPECIAL_LAUNCH_BAIKONUR_ROCKET:
+			case SPECIAL_DEFECTOR_IMPROVED:
+				//buildings do not defect
+				if( ! target->isKindOf( KINDOF_STRUCTURE ) )
+				{
+					// only attacking type things will defect (no dozers, supply trucks, workers...)
+// srj sez: I don't know why this is commented out, but it should remain thus, because
+// it is not necessarily the case that dozers, workers, etc. cannot attack; they may
+// "attack" Mines to disarm them...
+//				if ( target->isKindOf( KINDOF_CAN_ATTACK ) )
+					{
+						//neutral or same-team units are worthless defectors 
+						if( r == ENEMIES )
+						{
+							return canMakeObjectDefector( obj, target, commandSource );
+						}
+					}
+				}
+				break;
 			case SPECIAL_SNEAK_ATTACK:
 				return false;
 
@@ -1914,6 +1937,7 @@ Bool ActionManager::canDoSpecialPower( const Object *obj, const SpecialPowerTemp
 			case SPECIAL_SNEAK_ATTACK:
 			case SPECIAL_EMP_PULSE:
 			case SPECIAL_CASH_HACK:
+			case SPECIAL_DEFECTOR_IMPROVED:
 				//These all require object or location targets.
 				return false;
 
@@ -2090,4 +2114,99 @@ Bool ActionManager::canOverrideSpecialPowerDestination( const Object *obj, const
 		return ThePartitionManager->getShroudStatusForPlayer( obj->getControllingPlayer()->getPlayerIndex(), loc ) != CELLSHROUD_SHROUDED;
 	}
 	return false;
+}
+
+// ------------------------------------------------------------------------------------------------
+
+Bool ActionManager::canCaptureUnits( const Object *obj, const Object *objectToCapture, CommandSourceType commandSource )
+{
+
+	// sanity
+	if( obj == NULL || objectToCapture == NULL )
+		return FALSE;
+
+	//Make sure our object has the capability of performing this special ability.
+
+	Bool isOwnerBlackLotus = obj->hasSpecialPower( SPECIAL_MINDCONTROL_STEAL );
+
+	if( !obj->hasSpecialPower( SPECIAL_MINDCONTROL_STEAL ) && !isOwnerBlackLotus)
+	{
+		return false;
+	}
+
+	if( objectToCapture->isKindOf( KINDOF_IMMUNE_TO_CAPTURE ) )
+	{
+		return false;
+	}
+
+//  This is the althernate way to one-at-a-time BlackLotus' specials; we'll keep it commented her until Dustin decides, or until 12/10/02
+//	if ( isOwnerBlackLotus )
+//	{
+//		SpecialPowerModuleInterface *disableSPI = obj->findSpecialPowerModuleInterface( SPECIAL_BLACKLOTUS_DISABLE_VEHICLE_HACK );
+//		if ( disableSPI && disableSPI->isBusy() )
+//			return FALSE;
+//		SpecialPowerModuleInterface *cashSPI = obj->findSpecialPowerModuleInterface( SPECIAL_BLACKLOTUS_STEAL_CASH_HACK );
+//		if ( cashSPI && cashSPI->isBusy() )
+//			return FALSE;
+//	}
+
+
+	SpecialPowerModuleInterface *spInterface = obj->findSpecialPowerModuleInterface( SPECIAL_MINDCONTROL_STEAL );
+	if( !spInterface || spInterface->getPercentReady() < 1.0f )
+	{
+		//Special not ready or non-existent.
+		return FALSE;
+	}
+
+	// can't capture dead things.
+	if (objectToCapture->isEffectivelyDead())
+	{
+		return FALSE;
+	}
+
+	// Make sure we are NOT targeting a building!
+	if( objectToCapture->isKindOf( KINDOF_STRUCTURE ) )
+	{
+		return FALSE;
+	}
+
+	// if the target is in the shroud, we can't do anything
+	if (isObjectShroudedForAction(obj, objectToCapture, commandSource))
+		return FALSE;
+
+	Relationship r = obj->getRelationship(objectToCapture);
+
+	// ensure that it's capturable, and not allied
+	// exception: we can always capture enemy bldgs, regardless of kindof
+	if (!(r == ENEMIES && r != ALLIES)) {
+		return false;
+
+		//Make sure we are targeting a building!
+		if( !objectToCapture->isKindOf( KINDOF_VEHICLE ) || !objectToCapture->isKindOf( KINDOF_INFANTRY )|| !objectToCapture->isKindOf( KINDOF_AIRCRAFT ) )
+		{
+			return FALSE;
+		}
+
+		//If the enemy unit is stealthed and not detected, then we can't attack it!
+        if( objectToCapture->testStatus( OBJECT_STATUS_STEALTHED ) && 
+			!objectToCapture->testStatus( OBJECT_STATUS_DETECTED ) &&
+			!objectToCapture->testStatus( OBJECT_STATUS_DISGUISED ) )
+		{
+			return FALSE;
+		}
+
+		//Also check if the object is a container containing stealth units tricking
+		//the player into thinking it isn't actually an enemy.
+		if (appearsToContainFriendlies(obj, objectToCapture))
+			return FALSE;
+
+		return TRUE;
+	}
+
+	// Also check if the object is a container containing stealth units, tricking
+	// the player into thinking it isn't actually an enemy.
+	if (appearsToContainFriendlies(obj, objectToCapture))
+		return FALSE;
+
+  return TRUE;
 }

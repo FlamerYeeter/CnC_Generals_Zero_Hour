@@ -128,6 +128,8 @@ enum SpecialPowerType
 	SUPW_SPECIAL_NEUTRON_MISSILE,
 
 	SPECIAL_BATTLESHIP_BOMBARDMENT,
+	SPECIAL_DEFECTOR_IMPROVED,
+	SPECIAL_MINDCONTROL_STEAL,
 		
 	SPECIALPOWER_COUNT,
 	// don't forget to add new strings to SpecialPowerMaskType::s_bitNameList[]

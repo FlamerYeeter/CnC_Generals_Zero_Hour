@@ -56,6 +56,7 @@
 #include "GameLogic/Module/WeaponBonusUpdate.h"
 
 #define DEFINE_WEAPONBONUSCONDITION_NAMES
+#define DEFINE_RELATIONSHIP_NAMES
 
 #include "GameLogic/Module/ContainModule.h"
 #include "GameLogic/Object.h"
@@ -67,6 +68,7 @@ WeaponBonusUpdateModuleData::WeaponBonusUpdateModuleData()
 {
 	m_requiredAffectKindOf.clear();
 	m_forbiddenAffectKindOf.clear();
+    m_affectedBy = (1 << ALLIES);
 	m_bonusDuration = 0;
 	m_bonusDelay = 0;
 	m_bonusRange = 0;
@@ -80,10 +82,11 @@ void WeaponBonusUpdateModuleData::buildFieldParse(MultiIniFieldParse& p)
 	static const FieldParse dataFieldParse[] = 
 	{
 		{ "RequiredAffectKindOf",		KindOfMaskType::parseFromINI,		NULL, offsetof( WeaponBonusUpdateModuleData, m_requiredAffectKindOf ) },		
-		{ "ForbiddenAffectKindOf",	KindOfMaskType::parseFromINI,		NULL, offsetof( WeaponBonusUpdateModuleData, m_forbiddenAffectKindOf ) },
-		{ "BonusDuration",					INI::parseDurationUnsignedInt,	NULL, offsetof( WeaponBonusUpdateModuleData, m_bonusDuration ) },
-		{ "BonusDelay",							INI::parseDurationUnsignedInt,	NULL, offsetof( WeaponBonusUpdateModuleData, m_bonusDelay ) },
-		{ "BonusRange",							INI::parseReal,									NULL, offsetof( WeaponBonusUpdateModuleData, m_bonusRange ) },
+		{ "ForbiddenAffectKindOf",	    KindOfMaskType::parseFromINI,		NULL, offsetof( WeaponBonusUpdateModuleData, m_forbiddenAffectKindOf ) },
+		{ "WeaponBonusAffects",                 INI::parseBitString32, TheRelationshipNames, offsetof( WeaponBonusUpdateModuleData, m_affectedBy ) },
+		{ "BonusDuration",				INI::parseDurationUnsignedInt,	NULL, offsetof( WeaponBonusUpdateModuleData, m_bonusDuration ) },
+		{ "BonusDelay",					INI::parseDurationUnsignedInt,	NULL, offsetof( WeaponBonusUpdateModuleData, m_bonusDelay ) },
+		{ "BonusRange",					INI::parseReal,									NULL, offsetof( WeaponBonusUpdateModuleData, m_bonusRange ) },
 		{ "BonusConditionType",			INI::parseIndexList,	TheWeaponBonusNames, offsetof( WeaponBonusUpdateModuleData, m_bonusConditionType ) },
 		{ 0, 0, 0, 0 }
 	};
@@ -128,7 +131,11 @@ UpdateSleepTime WeaponBonusUpdate::update( void )
 	const WeaponBonusUpdateModuleData * data = getWeaponBonusUpdateModuleData();
 	Object *me = getObject();
 
-	PartitionFilterRelationship relationship( me, PartitionFilterRelationship::ALLOW_ALLIES );
+    Int requiredMask = 0;
+    if (data->m_affectedBy & (1 << ALLIES)) requiredMask |= (1 << ALLIES);
+    else if (data->m_affectedBy & (1 << ENEMIES)) requiredMask |= (1 << ENEMIES);
+    else if (data->m_affectedBy & (1 << NEUTRAL)) requiredMask |= (1 << NEUTRAL);
+	PartitionFilterRelationship relationship( me, data->m_affectedBy);
 	PartitionFilterSameMapStatus filterMapStatus(me);
 	PartitionFilterAlive filterAlive;
 

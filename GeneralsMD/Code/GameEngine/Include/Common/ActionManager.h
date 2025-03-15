@@ -101,6 +101,7 @@ public:
   Bool canFireWeapon( const Object *obj, const WeaponSlotType slot, CommandSourceType commandSource );
 	Bool canGarrison( const Object *obj, const Object *target, CommandSourceType commandSource );
 	Bool canOverrideSpecialPowerDestination( const Object *obj, const Coord3D *loc, SpecialPowerType spType, CommandSourceType commandSource );
+	Bool canCaptureUnits( const Object *obj, const Object *objectToCapture, CommandSourceType commandSource );
 
 	//Player to unit check
 	Bool canPlayerGarrison( const Player *player, const Object *target, CommandSourceType commandSource );

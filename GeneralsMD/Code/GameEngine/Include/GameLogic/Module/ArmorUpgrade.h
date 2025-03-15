@@ -66,11 +66,25 @@ class Thing;
 // TYPE DEFINES ///////////////////////////////////////////////////////////////
 //-----------------------------------------------------------------------------
 
+// New code, now you get to choose what flag to set 
+// (allowing you to have multiple weaponset flag choices, good for units that wanted to have different weapon sets or kits)
+enum ArmorSetType;
+//-----------------------------------------------------------------------------
+class ArmorUpgradeModuleData : public UpgradeModuleData
+{
+public:
+	ArmorSetType m_armorSetFlag;
+
+	ArmorUpgradeModuleData();
+
+	static void buildFieldParse(MultiIniFieldParse& p);
+};
+
 class ArmorUpgrade : public UpgradeModule
 {
 
 	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE( ArmorUpgrade, "ArmorUpgrade" )
-	MAKE_STANDARD_MODULE_MACRO( ArmorUpgrade );
+	MAKE_STANDARD_MODULE_MACRO_WITH_MODULE_DATA( ArmorUpgrade, ArmorUpgradeModuleData );
 
 public:
 

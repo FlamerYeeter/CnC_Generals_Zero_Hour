@@ -252,17 +252,10 @@ void EMPUpdate::doDisableAttack( void )
 				//DONT DISABLE PEOPLE, EXCEPT FOR STINGER SOLDIERS
 				continue;
 			}
-			else if ( curVictim->isKindOf( KINDOF_AIRCRAFT ) && curVictim->isAirborneTarget() )// is in the sky
-      {
-        // WITHIN THE SET OF ALL FLYING THINGS, WE WANT TO EXEMPT SUPERWEAPON TRANSPORTS
-//        if ( curVictim->isKindOf( KINDOF_TRANSPORT ) )                  // is transport kindof
-//          if ( curVictim->getContain() )                                // does carry stuff
-//            if ( curVictim->getContain()->getContainCount() > 0 )     // is carrying something
-//              if ( ! curVictim->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )  // but not a helicopter
-//                continue;
-
-        if ( curVictim->isKindOf( KINDOF_EMP_HARDENED ) ) // self-explanitory
-          continue;
+			else if ( curVictim->isKindOf( KINDOF_AIRCRAFT ) && curVictim->isAirborneTarget() || curVictim->isKindOf( KINDOF_VEHICLE ))// is in the sky
+            {
+                if ( curVictim->isKindOf( KINDOF_EMP_HARDENED ) ) // self-explanitory
+                continue;
 
 				curVictim->kill();// @todo this should use some sort of DEADSTICK DIE or something...
 				Drawable *drw = curVictim->getDrawable();
@@ -272,6 +265,9 @@ void EMPUpdate::doDisableAttack( void )
 				}
 				continue;
 			}
+
+
+
 			else if ( curVictim->isKindOf( KINDOF_STRUCTURE ) )
 			{
 				if ( ! curVictim->isFactionStructure() )
@@ -344,7 +340,7 @@ void EMPUpdate::doDisableAttack( void )
 
 	//Kris -- October 28, 2003 -- Patch 1.01
 	//Handle edge case when the EMP explodes, but "misses" the intended target.
-	if( intendedVictim && !intendedVictimProcessed && intendedVictim->isKindOf( KINDOF_AIRCRAFT ) )
+	if( intendedVictim && !intendedVictimProcessed && intendedVictim->isKindOf( KINDOF_AIRCRAFT ) || intendedVictim->isKindOf( KINDOF_VEHICLE ) )
 	{
     if( !intendedVictim->isKindOf( KINDOF_EMP_HARDENED ) )
 		{

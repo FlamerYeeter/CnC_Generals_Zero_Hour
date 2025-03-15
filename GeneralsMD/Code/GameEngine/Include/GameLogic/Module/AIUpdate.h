@@ -83,6 +83,14 @@ enum LocomotorSetType
 	LOCOMOTORSET_TAXIING,			// set used for normally-airborne items while taxiing on ground
 	LOCOMOTORSET_SUPERSONIC,	// set used for high-speed attacks
 	LOCOMOTORSET_SLUGGISH,		// set used for abnormally slow (but not damaged) speeds
+	LOCOMOTORSET_NORMAL_RIDER1,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER2,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER3,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER4,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER5,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER6,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER7,		// set used for RIDERS
+	LOCOMOTORSET_NORMAL_RIDER8,		// set used for RIDERS
 
 	LOCOMOTORSET_COUNT	///< keep last, please
 };
@@ -107,6 +115,14 @@ static const char *TheLocomotorSetNames[] =
 	"SET_TAXIING",
 	"SET_SUPERSONIC",
 	"SET_SLUGGISH",
+	"SET_NORMAL_RIDER1",
+	"SET_NORMAL_RIDER2",
+	"SET_NORMAL_RIDER3",
+	"SET_NORMAL_RIDER4",
+	"SET_NORMAL_RIDER5",
+	"SET_NORMAL_RIDER6",
+	"SET_NORMAL_RIDER7",
+	"SET_NORMAL_RIDER8",
 
 	NULL
 };

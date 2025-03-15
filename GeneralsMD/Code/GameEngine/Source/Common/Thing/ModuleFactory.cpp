@@ -219,6 +219,7 @@
 #include "GameLogic/Module/SupplyCenterCreate.h"
 #include "GameLogic/Module/SupplyWarehouseCreate.h"
 #include "GameLogic/Module/GrantUpgradeCreate.h"
+#include "GameLogic/Module/GrantUpgradeScience.h"
 #include "GameLogic/Module/PreorderCreate.h"
 #include "GameLogic/Module/SpecialPowerCreate.h"
 #include "GameLogic/Module/VeterancyGainCreate.h"
@@ -235,6 +236,7 @@
 #include "GameLogic/Module/ConvertToHijackedVehicleCrateCollide.h"
 #include "GameLogic/Module/HealCrateCollide.h"
 #include "GameLogic/Module/MoneyCrateCollide.h"
+#include "GameLogic/Module/MindControlUnitCrateCollide.h"
 #include "GameLogic/Module/SabotageCommandCenterCrateCollide.h"
 #include "GameLogic/Module/SabotageFakeBuildingCrateCollide.h"
 #include "GameLogic/Module/SabotageInternetCenterCrateCollide.h"
@@ -504,6 +506,7 @@ void ModuleFactory::init( void )
 	addModule( SupplyWarehouseCreate );
 	addModule( SpecialPowerCreate );
 	addModule( GrantUpgradeCreate );
+	addModule( GrantUpgradeScience );
 	addModule( VeterancyGainCreate );
 
 	// damage modules
@@ -516,6 +519,7 @@ void ModuleFactory::init( void )
 
 	addModule( HealCrateCollide );
 	addModule( MoneyCrateCollide );
+	addModule( MindControlUnitCrateCollide );
 	addModule( ShroudCrateCollide );
 	addModule( UnitCrateCollide );
 	addModule( VeterancyCrateCollide );

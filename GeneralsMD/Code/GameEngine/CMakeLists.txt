@@ -359,6 +359,7 @@ target_sources(GameEngine PRIVATE
     Include/GameLogic/Module/GrantScienceUpgrade.h
     Include/GameLogic/Module/GrantStealthBehavior.h
     Include/GameLogic/Module/GrantUpgradeCreate.h
+    Include/GameLogic/Module/GrantUpgradeScience.h
     Include/GameLogic/Module/HackInternetAIUpdate.h
     Include/GameLogic/Module/HealContain.h
     Include/GameLogic/Module/HealCrateCollide.h
@@ -381,6 +382,7 @@ target_sources(GameEngine PRIVATE
     Include/GameLogic/Module/LockWeaponCreate.h
     Include/GameLogic/Module/LocomotorSetUpgrade.h
     Include/GameLogic/Module/MaxHealthUpgrade.h
+    Include/GameLogic/Module/MindControlUnitCrateCollide.h
     Include/GameLogic/Module/MinefieldBehavior.h
     Include/GameLogic/Module/MissileAIUpdate.h
     Include/GameLogic/Module/MissileLauncherBuildingUpdate.h
@@ -925,6 +927,7 @@ target_sources(GameEngine PRIVATE
     Source/GameLogic/Object/Collide/CrateCollide/SabotageSuperweaponCrateCollide.cpp
     Source/GameLogic/Object/Collide/CrateCollide/SabotageSupplyCenterCrateCollide.cpp
     Source/GameLogic/Object/Collide/CrateCollide/SabotageSupplyDropzoneCrateCollide.cpp
+    Source/GameLogic/Object/Collide/CrateCollide/MindControlUnitCrateCollide.cpp
     Source/GameLogic/Object/Collide/CrateCollide/SalvageCrateCollide.cpp
     Source/GameLogic/Object/Collide/CrateCollide/ShroudCrateCollide.cpp
     Source/GameLogic/Object/Collide/CrateCollide/UnitCrateCollide.cpp
@@ -946,6 +949,7 @@ target_sources(GameEngine PRIVATE
     Source/GameLogic/Object/Contain/TunnelContain.cpp
     Source/GameLogic/Object/Create/CreateModule.cpp
     Source/GameLogic/Object/Create/GrantUpgradeCreate.cpp
+    Source/GameLogic/Object/Create/GrantUpgradeScience.cpp
     Source/GameLogic/Object/Create/LockWeaponCreate.cpp
     Source/GameLogic/Object/Create/PreorderCreate.cpp
     Source/GameLogic/Object/Create/SpecialPowerCreate.cpp

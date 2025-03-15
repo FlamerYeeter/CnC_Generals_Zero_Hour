@@ -1,32 +1,3 @@
-/*
-**	Command & Conquer Generals Zero Hour(tm)
-**	Copyright 2025 Electronic Arts Inc.
-**
-**	This program is free software: you can redistribute it and/or modify
-**	it under the terms of the GNU General Public License as published by
-**	the Free Software Foundation, either version 3 of the License, or
-**	(at your option) any later version.
-**
-**	This program is distributed in the hope that it will be useful,
-**	but WITHOUT ANY WARRANTY; without even the implied warranty of
-**	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-**	GNU General Public License for more details.
-**
-**	You should have received a copy of the GNU General Public License
-**	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-////////////////////////////////////////////////////////////////////////////////
-//																																						//
-//  (c) 2001-2003 Electronic Arts Inc.																				//
-//																																						//
-////////////////////////////////////////////////////////////////////////////////
-
-// FILE: RiderChangeContain.cpp //////////////////////////////////////////////////////////////////////
-// Author: Kris Morness, May 2003
-// Desc:   Contain module for the combat bike (transport that switches units).
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
 // USER INCLUDES //////////////////////////////////////////////////////////////////////////////////
 #include "PreRTS.h"	// This must go first in EVERY cpp file int the GameEngine
 
@@ -65,8 +36,16 @@
 // ------------------------------------------------------------------------------------------------
 RiderChangeContainModuleData::RiderChangeContainModuleData()
 {
+	m_riders_x.reserve( MAX_RIDERS );
+	for( int i = 0; i < MAX_RIDERS; i++ )
+	{
+		m_riders_x.push_back( &m_riders[ i ] );
+	}
+
 	m_scuttleFrames = 0;
 	m_scuttleState = MODELCONDITION_TOPPLED;
+
+  m_surviveScuttle = TRUE;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -96,6 +75,16 @@ void RiderChangeContainModuleData::parseRiderInfo( INI* ini, void *instance, voi
 	rider->m_locomotorSetType = (LocomotorSetType)INI::scanIndexList( ini->getNextToken(), TheLocomotorSetNames );
 }
 
+void RiderChangeContainModuleData::parseExtraRiderInfo( INI* ini, void *instance, void* store, const void* userData )
+{
+	VecExtraRiderInfo* vecRider = (VecExtraRiderInfo*)store;
+
+	RiderInfo* rider = new RiderInfo;
+	parseRiderInfo(ini, instance, rider, userData);
+
+	vecRider->push_back(rider);
+}
+
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 void RiderChangeContainModuleData::buildFieldParse(MultiIniFieldParse& p)
@@ -112,8 +101,13 @@ void RiderChangeContainModuleData::buildFieldParse(MultiIniFieldParse& p)
 		{ "Rider6",					parseRiderInfo,					NULL, offsetof( RiderChangeContainModuleData, m_riders[5] ) },
 		{ "Rider7",					parseRiderInfo,					NULL, offsetof( RiderChangeContainModuleData, m_riders[6] ) },
 		{ "Rider8",					parseRiderInfo,					NULL, offsetof( RiderChangeContainModuleData, m_riders[7] ) },
+
+		{ "RiderX",					parseExtraRiderInfo,		NULL, offsetof( RiderChangeContainModuleData, m_riders_x  ) },
+
     { "ScuttleDelay",   INI::parseDurationUnsignedInt,	NULL, offsetof( RiderChangeContainModuleData, m_scuttleFrames ) },
     { "ScuttleStatus",  INI::parseIndexList,		ModelConditionFlags::getBitNames(), offsetof( RiderChangeContainModuleData, m_scuttleState ) },
+
+    { "SurviveScuttle", INI::parseBool,					NULL, offsetof( RiderChangeContainModuleData, m_surviveScuttle ) },
 		{ 0, 0, 0, 0 }
 	};
   p.add(dataFieldParse);
@@ -172,9 +166,12 @@ Bool RiderChangeContain::isValidContainerFor(const Object* rider, Bool checkCapa
 		//We can enter this bike... but now we need to extend the base functionality by limiting
 		//which infantry can enter.
 		const RiderChangeContainModuleData *data = getRiderChangeContainModuleData();
-		for( int i = 0; i < MAX_RIDERS; i++ )
+		// for( int i = 0; i < MAX_RIDERS; i++ )
+		for (VecExtraRiderInfoCIt ii = data->m_riders_x.begin(); ii != data->m_riders_x.end(); ++ii)
 		{
-			const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_riders[ i ].m_templateName );
+			const RiderInfo* it = *ii;
+			// const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_riders[ i ].m_templateName );
+			const ThingTemplate *thing = TheThingFactory->findTemplate( it->m_templateName );
 			if( thing->isEquivalentTo( rider->getTemplate() ) )
 			{
 				//We found a valid rider, so return success.
@@ -213,30 +210,45 @@ void RiderChangeContain::onContaining( Object *rider, Bool wasSelected )
 
 	//Find the rider in the list and set the appropriate model condition
 	const RiderChangeContainModuleData *data = getRiderChangeContainModuleData();
-	for( int i = 0; i < MAX_RIDERS; i++ )
+	// for( int i = 0; i < MAX_RIDERS; i++ )
+  for (VecExtraRiderInfoCIt ii = data->m_riders_x.begin(); ii != data->m_riders_x.end(); ++ii)
 	{
-		const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_riders[ i ].m_templateName );
+		const RiderInfo* it = *ii;
+		// const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_riders[ i ].m_templateName );
+		const ThingTemplate *thing = TheThingFactory->findTemplate( it->m_templateName );
 		if( thing->isEquivalentTo( rider->getTemplate() ) )
 		{
+      if ( data->m_surviveScuttle )
+      {
+        obj->clearModelConditionState( data->m_scuttleState );
+        // Currently disabled, so you can technically make Rider-mechanic units actually survive on certain conditions
+        // obj->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNSELECTABLE ) );
+        // obj->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_IMMOBILE ) );
+      }
 
 			//This is our rider, so set the correct model condition.
-			obj->setModelConditionState( data->m_riders[ i ].m_modelConditionFlagType );
+			// obj->setModelConditionState( data->m_riders[ i ].m_modelConditionFlagType );
+			obj->setModelConditionState( it->m_modelConditionFlagType );
 
 			//Also set the correct weaponset flag
-			obj->setWeaponSetFlag( data->m_riders[ i ].m_weaponSetFlag );
+			// obj->setWeaponSetFlag( data->m_riders[ i ].m_weaponSetFlag );
+			obj->setWeaponSetFlag( it->m_weaponSetFlag );
 
 			//Also set the object status
-			obj->setStatus( MAKE_OBJECT_STATUS_MASK( data->m_riders[ i ].m_objectStatusType ) );
+			// obj->setStatus( MAKE_OBJECT_STATUS_MASK( data->m_riders[ i ].m_objectStatusType ) );
+			obj->setStatus( MAKE_OBJECT_STATUS_MASK( it->m_objectStatusType ) );
 
 			//Set the new commandset override
-			obj->setCommandSetStringOverride( data->m_riders[ i ].m_commandSet );
+			// obj->setCommandSetStringOverride( data->m_riders[ i ].m_commandSet );
+			obj->setCommandSetStringOverride( it->m_commandSet );
 			TheControlBar->markUIDirty();	// Refresh the UI in case we are selected
 
 			//Change the locomotor.
 			AIUpdateInterface* ai = obj->getAI();
 			if( ai )
 			{
-				ai->chooseLocomotorSet( data->m_riders[ i ].m_locomotorSetType );
+				// ai->chooseLocomotorSet( data->m_riders[ i ].m_locomotorSetType );
+				ai->chooseLocomotorSet( it->m_locomotorSetType );
 			}
 
 			if( obj->getStatusBits().test( OBJECT_STATUS_STEALTHED ) )
@@ -284,19 +296,26 @@ void RiderChangeContain::onRemoving( Object *rider )
 
 	//Find the rider in the list and clear various data.
 	const RiderChangeContainModuleData *data = getRiderChangeContainModuleData();
-	for( int i = 0; i < MAX_RIDERS; i++ )
+	// for( int i = 0; i < MAX_RIDERS; i++ )
+  for (VecExtraRiderInfoCIt ii = data->m_riders_x.begin(); ii != data->m_riders_x.end(); ++ii)
 	{
-		const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_riders[ i ].m_templateName );
+		const RiderInfo* it = *ii;
+		// const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_riders[ i ].m_templateName );
+		const ThingTemplate *thing = TheThingFactory->findTemplate( it->m_templateName );
 		if( thing->isEquivalentTo( rider->getTemplate() ) )
 		{
+
 			//This is our rider, so clear the current model condition.
-			bike->clearModelConditionFlags( MAKE_MODELCONDITION_MASK2( data->m_riders[ i ].m_modelConditionFlagType, MODELCONDITION_DOOR_1_CLOSING ) );
+			// bike->clearModelConditionFlags( MAKE_MODELCONDITION_MASK2( data->m_riders[ i ].m_modelConditionFlagType, MODELCONDITION_DOOR_1_CLOSING ) );
+			bike->clearModelConditionFlags( MAKE_MODELCONDITION_MASK2( it->m_modelConditionFlagType, MODELCONDITION_DOOR_1_CLOSING ) );
 
 			//Also clear the current weaponset flag
-			bike->clearWeaponSetFlag( data->m_riders[ i ].m_weaponSetFlag );
+			// bike->clearWeaponSetFlag( data->m_riders[ i ].m_weaponSetFlag );
+			bike->clearWeaponSetFlag( it->m_weaponSetFlag );
 
 			//Also clear the object status
-			bike->clearStatus( MAKE_OBJECT_STATUS_MASK( data->m_riders[ i ].m_objectStatusType ) );
+			// bike->clearStatus( MAKE_OBJECT_STATUS_MASK( data->m_riders[ i ].m_objectStatusType ) );
+			bike->clearStatus( MAKE_OBJECT_STATUS_MASK( it->m_objectStatusType ) );
 			
 			if( rider->getControllingPlayer() != NULL )
 			{
@@ -330,7 +349,7 @@ void RiderChangeContain::onRemoving( Object *rider )
 				teamMsg->appendObjectIDArgument( rider->getID() );
 				TheInGameUI->selectDrawable( riderDraw );
 				TheInGameUI->setDisplayedMaxWarning( FALSE );
-
+      
 				//Create the de-selection message for the container
 				teamMsg = TheMessageStream->appendMessage( GameMessage::MSG_REMOVE_FROM_SELECTED_GROUP );
 				teamMsg->appendObjectIDArgument( bike->getID() );
@@ -338,12 +357,15 @@ void RiderChangeContain::onRemoving( Object *rider )
 			}
 
 			//Finally, scuttle the bike so nobody else can use it! <Design Spec>
-			m_scuttledOnFrame = TheGameLogic->getFrame();
-			bike->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNSELECTABLE ) );
+      if ( !data->m_surviveScuttle )
+      {
+        m_scuttledOnFrame = TheGameLogic->getFrame();
+      }
+			// bike->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNSELECTABLE ) );
 			bike->setModelConditionState( data->m_scuttleState );
 			if( !bike->getAI()->isMoving() )
 			{
-				bike->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_IMMOBILE ) );
+				// bike->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_IMMOBILE ) );
 			}
 		}
 	}

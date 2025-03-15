@@ -559,6 +559,9 @@ Bool SpecialAbilityUpdate::initiateIntentToDoSpecialPower( const SpecialPowerTem
   disableSA = getObject()->findSpecialAbilityUpdate( SPECIAL_BOOBY_TRAP );
   if( disableSA && disableSA != this ) 
     disableSA->onExit( FALSE );
+  disableSA = getObject()->findSpecialAbilityUpdate( SPECIAL_MINDCONTROL_STEAL );
+  if( disableSA && disableSA != this ) 
+    disableSA->onExit( FALSE );
 
 
   setWakeFrame(getObject(), UPDATE_SLEEP_NONE);
@@ -1475,6 +1478,42 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       object->getControllingPlayer()->getAcademyStats()->recordBuildingCapture();
       break;
     }
+    case SPECIAL_MINDCONTROL_STEAL:
+    {
+      Object *target = TheGameLogic->findObjectByID( m_targetID );
+
+      //sanity
+      if( !target )
+      {
+        return;
+      }
+
+      if (target->getTeam() == object->getTeam())
+      {
+        // it's been captured by a colleague! we should stop.
+        return;
+      }
+
+      // Just in case we are capturing a building which is already garrisoned by other
+      ContainModuleInterface * contain =  target->getContain();
+      if ( contain && contain->isGarrisonable() )
+      {
+        contain->removeAllContained( TRUE );
+        break; // we do not want to set a neutral building to our team if we are not in it, that would be confusing!
+      }
+
+      target->defect( object->getControllingPlayer()->getDefaultTeam(), 1); // one frame of flash! 
+
+      SpecialPowerModuleInterface *spmInterface = getMySPM();
+      if (spmInterface && spTemplate->getSpecialPowerType() == SPECIAL_MINDCONTROL_STEAL )
+      {
+        // only for black lotus, not infantry capture which resets in contunueprep()
+        spmInterface->startPowerRecharge();
+      }
+      
+      object->getControllingPlayer();
+      break;
+    }
     case SPECIAL_BLACKLOTUS_STEAL_CASH_HACK:
     {
       Object *target = TheGameLogic->findObjectByID( m_targetID );
@@ -1982,6 +2021,7 @@ void SpecialAbilityUpdate::endPreparation()
 		case SPECIAL_HACKER_DISABLE_BUILDING:
 		case SPECIAL_BLACKLOTUS_DISABLE_VEHICLE_HACK: 
 		case SPECIAL_BLACKLOTUS_CAPTURE_BUILDING:
+		case SPECIAL_MINDCONTROL_STEAL:
 		case SPECIAL_BLACKLOTUS_STEAL_CASH_HACK:
 		case SPECIAL_INFANTRY_CAPTURE_BUILDING:	
 			killSpecialObjects();

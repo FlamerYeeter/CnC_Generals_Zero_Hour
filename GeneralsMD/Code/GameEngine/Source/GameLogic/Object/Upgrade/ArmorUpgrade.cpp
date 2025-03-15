@@ -56,6 +56,7 @@
 #include "Common/Player.h"
 #include "Common/Upgrade.h"
 #include "GameLogic/Object.h"
+#include "GameLogic/ArmorSet.h"
 #include "GameLogic/Module/ArmorUpgrade.h"
 #include "GameLogic/Module/BodyModule.h"
 //-----------------------------------------------------------------------------
@@ -69,6 +70,27 @@
 //-----------------------------------------------------------------------------
 // PRIVATE FUNCTIONS //////////////////////////////////////////////////////////
 //-----------------------------------------------------------------------------
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+ArmorUpgradeModuleData::ArmorUpgradeModuleData()
+{
+	m_armorSetFlag = ARMORSET_PLAYER_UPGRADE; //default
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+void ArmorUpgradeModuleData::buildFieldParse(MultiIniFieldParse& p) 
+{
+  UpgradeModuleData::buildFieldParse(p);
+
+	static const FieldParse dataFieldParse[] = 
+	{
+		{ "ArmorSetFlag",	ArmorSetFlags::parseSingleBitFromINI,	NULL, offsetof( ArmorUpgradeModuleData, m_armorSetFlag ) },
+		{ 0, 0, 0, 0 }
+	};
+  p.add(dataFieldParse);
+}
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -92,16 +114,17 @@ void ArmorUpgrade::upgradeImplementation( )
 	Object *obj = getObject();
 	if( !obj )
 		return;
-
+    const ArmorUpgradeModuleData *data = getArmorUpgradeModuleData();
 	BodyModuleInterface* body = obj->getBodyModule();
 	if ( body )
-		body->setArmorSetFlag( ARMORSET_PLAYER_UPGRADE );
+		body->setArmorSetFlag( data->m_armorSetFlag );
 
 	// Unique case for AMERICA to test for upgrade to set flag
-	if(isTriggeredBy("Upgrade_AmericaChemicalSuits"))
-	{
-		obj->getDrawable()->setTerrainDecal(TERRAIN_DECAL_CHEMSUIT);
-	}
+    // cut for now, we'll see
+	// if(isTriggeredBy("Upgrade_AmericaChemicalSuits"))
+	// {
+		// obj->getDrawable()->setTerrainDecal(TERRAIN_DECAL_CHEMSUIT);
+	// }
 }
 
 // ------------------------------------------------------------------------------------------------

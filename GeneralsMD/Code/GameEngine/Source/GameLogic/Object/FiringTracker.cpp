@@ -40,6 +40,7 @@
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Module/ObjectHelper.h"
 #include "GameLogic/Object.h"
+#include "GameLogic/Module/TempWeaponBonusHelper.h"
 #include "GameLogic/Weapon.h"
 
 #ifdef _INTERNAL
@@ -83,26 +84,58 @@ Int FiringTracker::getNumConsecutiveShotsAtVictim( const Object *victim ) const
 //-------------------------------------------------------------------------------------------------
 void FiringTracker::shotFired(const Weapon* weaponFired, ObjectID victimID)
 {
-	UnsignedInt now = TheGameLogic->getFrame();
-	Object *me = getObject();
-	const Object *victim = TheGameLogic->findObjectByID(victimID); // May be null for ground shot
+    static ObjectID lastVictimID = static_cast<ObjectID>(0);
+    UnsignedInt now = TheGameLogic->getFrame();
+    Object *me = getObject();
+    const Object *victimCheck = TheGameLogic->findObjectByID(victimID); // Use const for status check
+    Object *victim = const_cast<Object*>(victimCheck); // Cast only if we need to modify
 
-	if( victim && victim->testStatus(OBJECT_STATUS_FAERIE_FIRE) )
-	{
-		if( !me->testWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE) )
-		{
-			// We shoot faster at guys marked thusly
-			me->setWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE);
-		}
-	}
-	else
-	{
-		// A ground shot or the lack of the status on the target will clear this
-		if( me->testWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE) )
-		{
-			me->clearWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE);
-		}
-	}
+    // Faerie Fire - Faster fire rate
+    if (victimCheck && victimCheck->testStatus(OBJECT_STATUS_FAERIE_FIRE))
+    {
+        if (!me->testWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE))
+        {
+            me->setWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE);
+        }
+    }
+    else
+    {
+        if (me->testWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE))
+        {
+            me->clearWeaponBonusCondition(WEAPONBONUSCONDITION_TARGET_FAERIE_FIRE);
+        }
+    }
+
+    // Weakening - Decreased effectiveness
+    if (victim)
+    {
+        if (victimCheck->testStatus(OBJECT_STATUS_WEAKENING))
+        {
+            // Apply weakening effect
+            if (!victim->testWeaponBonusCondition(WEAPONBONUSCONDITION_DEMORALIZED_OBSOLETE))
+            {
+                victim->setWeaponBonusCondition(WEAPONBONUSCONDITION_DEMORALIZED_OBSOLETE);
+            }
+            lastVictimID = victimID; // Track last shot target
+        }
+        else
+        {
+            // If status is gone, clear the condition
+            victim->clearWeaponBonusCondition(WEAPONBONUSCONDITION_DEMORALIZED_OBSOLETE);
+        }
+    }
+
+    // ✅ Forcefully clear if we STOP shooting at the victim
+    if (victimID != lastVictimID)
+    {
+        Object *oldVictim = TheGameLogic->findObjectByID(lastVictimID);
+        if (oldVictim && oldVictim->testWeaponBonusCondition(WEAPONBONUSCONDITION_DEMORALIZED_OBSOLETE))
+        {
+            oldVictim->clearWeaponBonusCondition(WEAPONBONUSCONDITION_DEMORALIZED_OBSOLETE);
+        }
+        lastVictimID = victimID; // Update to new target
+    }
+
 
 	if( victimID == m_victimID )
 	{

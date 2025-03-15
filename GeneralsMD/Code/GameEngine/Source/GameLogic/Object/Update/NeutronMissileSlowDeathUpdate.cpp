@@ -29,6 +29,9 @@
 
 // INCLUDES ///////////////////////////////////////////////////////////////////////////////////////
 #include "PreRTS.h"	// This must go first in EVERY cpp file int the GameEngine
+
+#define DEFINE_DEATH_NAMES
+
 #include "Common/GameState.h"
 #include "Common/Player.h"
 #include "Common/Xfer.h"
@@ -38,6 +41,8 @@
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/ObjectIter.h"
+#include "GameLogic/Weaponset.h"
+#include "GameLogic/Weapon.h"
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/Module/FlammableUpdate.h"
 #include "GameLogic/Module/PhysicsUpdate.h"
@@ -70,6 +75,8 @@ NeutronMissileSlowDeathBehaviorModuleData::NeutronMissileSlowDeathBehaviorModule
 	}  // end for i
 	m_scorchSize = 0.0f;
 	m_fxList		 = NULL;
+	m_damageType										= DAMAGE_EXPLOSION;
+	m_deathType											= DEATH_EXPLODED;
 
 }  // end NeutronMissileSlowDeathBehaviorModuleData
 
@@ -84,6 +91,8 @@ NeutronMissileSlowDeathBehaviorModuleData::NeutronMissileSlowDeathBehaviorModule
 	{
 		{ "ScorchMarkSize", INI::parseReal, NULL, offsetof( NeutronMissileSlowDeathBehaviorModuleData, m_scorchSize ) },	
 		{ "FXList",					INI::parseFXList, NULL, offsetof( NeutronMissileSlowDeathBehaviorModuleData, m_fxList ) },
+		{ "DamageType",				DamageTypeFlags::parseSingleBitFromINI,	NULL,	offsetof( NeutronMissileSlowDeathBehaviorModuleData, m_damageType ) },		
+		{ "DeathType",				INI::parseIndexList,		TheDeathNames,	offsetof( NeutronMissileSlowDeathBehaviorModuleData, m_deathType ) },		
 
 		{ "Blast1Enabled", INI::parseBool, NULL, offsetof( NeutronMissileSlowDeathBehaviorModuleData, m_blastInfo[ NEUTRON_BLAST_1 ].enabled ) },	
 		{ "Blast1Delay", INI::parseDurationReal, NULL, offsetof( NeutronMissileSlowDeathBehaviorModuleData, m_blastInfo[ NEUTRON_BLAST_1 ].delay ) },	
@@ -306,8 +315,8 @@ void NeutronMissileSlowDeathBehavior::doBlast( const BlastInfo *blastInfo )
 
 	// setup a damage info structure to do some damage
 	DamageInfo damageInfo;
-	damageInfo.in.m_damageType = DAMAGE_EXPLOSION;
-	damageInfo.in.m_deathType = DEATH_EXPLODED;
+	damageInfo.in.m_damageType = modData->m_damageType;
+	damageInfo.in.m_deathType = modData->m_deathType;
 	damageInfo.in.m_sourceID = missile->getID();
 	damageInfo.in.m_amount = blastInfo->minDamage;
 

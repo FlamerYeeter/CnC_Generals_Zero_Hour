@@ -52,6 +52,10 @@ struct RiderInfo
 };
 
 //-------------------------------------------------------------------------------------------------
+typedef std::vector<RiderInfo*> VecExtraRiderInfo;
+typedef VecExtraRiderInfo::iterator VecExtraRiderInfoIt;
+typedef VecExtraRiderInfo::const_iterator VecExtraRiderInfoCIt;
+
 class RiderChangeContainModuleData : public TransportContainModuleData
 {
 public:
@@ -59,11 +63,16 @@ public:
 	RiderInfo m_riders[ MAX_RIDERS ];
 	UnsignedInt m_scuttleFrames;
 	ModelConditionFlagType m_scuttleState;
+  bool m_surviveScuttle;
+
+  VecExtraRiderInfo m_riders_x;
 
 	RiderChangeContainModuleData();
 
 	static void buildFieldParse(MultiIniFieldParse& p);
 	static void parseRiderInfo( INI* ini, void *instance, void *store, const void* /*userData*/ );
+
+	static void parseExtraRiderInfo( INI* ini, void *instance, void *store, const void* /*userData*/ );
 
 };
 
@@ -118,4 +127,3 @@ private:
 };
 
 #endif // __RIDER_CHANGE_CONTAIN_H
-

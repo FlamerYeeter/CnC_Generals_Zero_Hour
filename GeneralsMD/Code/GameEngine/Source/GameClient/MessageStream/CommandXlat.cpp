@@ -640,7 +640,8 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 							}
  							break;
 						default:
-							if( !weapon->getName().compare( "ComancheRocketPodWeapon" ) )
+                            // if( !weapon->getName().compare( "ComancheRocketPodWeapon" ) ) // as an experiment, I've decided to cut this out and make it as a secondary attack VOs
+                            if (weapon->getWeaponSlot() != PRIMARY_WEAPON) 
 							{
 								//Special case for comanche rocket pods.
 								soundToPlayPtr = templ->getPerUnitSound( "VoiceFireRocketPods" );

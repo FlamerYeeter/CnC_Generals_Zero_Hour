@@ -32,7 +32,30 @@
 
 #include "Common/Xfer.h"
 #include "GameLogic/Object.h"
+#include "GameLogic/WeaponSetType.h"
+#include "GameLogic/WeaponSetFlags.h"
 #include "GameLogic/Module/WeaponSetUpgrade.h"
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+WeaponSetUpgradeModuleData::WeaponSetUpgradeModuleData()
+{
+	m_weaponSetFlag = WEAPONSET_PLAYER_UPGRADE; //default
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+void WeaponSetUpgradeModuleData::buildFieldParse(MultiIniFieldParse& p) 
+{
+  UpgradeModuleData::buildFieldParse(p);
+
+	static const FieldParse dataFieldParse[] = 
+	{
+		{ "WeaponSetFlag",	WeaponSetFlags::parseSingleBitFromINI,	NULL, offsetof( WeaponSetUpgradeModuleData, m_weaponSetFlag ) },
+		{ 0, 0, 0, 0 }
+	};
+  p.add(dataFieldParse);
+}
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -52,8 +75,13 @@ void WeaponSetUpgrade::upgradeImplementation( )
 {
 	// Very simple; just need to flag the Object as having the player upgrade, and the WeaponSet chooser 
 	// will do the work of picking the right one from ini.  This comment is as long as the code.
+    // 
+    // Update 2025: You can now choose what weaponset flag, allowing you to either separate weapons for multiple individual upgrades
+    // OR you can stack the flags, essentially giving you a stacked weapon upgrade (for two or more global upgrades)
+    const WeaponSetUpgradeModuleData *data = getWeaponSetUpgradeModuleData();
+    
 	Object *obj = getObject();
-	obj->setWeaponSetFlag( WEAPONSET_PLAYER_UPGRADE );
+	obj->setWeaponSetFlag( data->m_weaponSetFlag );
 }
 
 // ------------------------------------------------------------------------------------------------

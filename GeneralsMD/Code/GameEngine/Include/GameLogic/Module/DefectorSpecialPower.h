@@ -82,4 +82,3 @@ protected:
 
 };
 #endif  // end DefectorSpecialPower
-
